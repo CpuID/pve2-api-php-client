@@ -18,19 +18,19 @@ PHP 5 with cURL (including SSL) support.
     $pve2 = new PVE2_API("hostname", "username", "realm", "password");
     # realm above can be pve, pam or any other realm available.
 
-	if ($pve2->constructor_success()) {
-		if ($pve2->login()) {
-			foreach ($pve2->get_node_list() as $node_name) {
-				print_r($pve2->get("/nodes/".$node_name."/status"));
-			}
-		} else {
-			print("Login to Proxmox Host failed.\n");
-			exit;
-		}
-	} else {
-		print("Could not create PVE2_API object.\n");
-		exit;
-	}
+    if ($pve2->constructor_success()) {
+        if ($pve2->login()) {
+            foreach ($pve2->get_node_list() as $node_name) {
+                print_r($pve2->get("/nodes/".$node_name."/status"));
+            }
+        } else {
+            print("Login to Proxmox Host failed.\n");
+            exit;
+        }
+    } else {
+        print("Could not create PVE2_API object.\n");
+        exit;
+    }
 
 
 Licensed under the MIT License.
