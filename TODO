@@ -1,0 +1,1 @@
+- add a new class extending PVE2_API that provides abstraction methods to common tasks, ie. create VM/container, change container settings, etc.
