@@ -20,7 +20,10 @@ class PVE2_API {
 	protected $pve_realm;
 	protected $pve_password;
 
+	private $print_debug;
+
 	protected $pve_login_ticket;
+	protected $pve_login_ticket_timestamp;
 	protected $pve_cluster_node_list;
 
 	public function __construct ($pve_hostname, $pve_username, $pve_realm, $pve_password) {
@@ -43,8 +46,11 @@ class PVE2_API {
 		$this->pve_realm = $pve_realm;
 		$this->pve_password = $pve_password;
 
+		$this->print_debug = false;
+
 		# Default this to null, so we can check later on if were logged in or not.
 		$this->pve_login_ticket = null;
+		$this->pve_login_ticket_timestamp = null;
 		$this->pve_cluster_node_list = null;
 		$this->constructor_success = true;
 	}
@@ -60,6 +66,20 @@ class PVE2_API {
 		}
 		$postfields_string = implode("&", $postfields_key_values);
 		return $postfields_string;
+	}
+
+	/*
+	 * bool set_debug (bool on_off)
+	 * Sets if we should print() debug information throughout the process,
+	 * to assist in troubleshooting...
+	 */
+	public function set_debug ($on_off) {
+		if (is_bool($on_off)) {
+			$this->print_debug = $on_off;
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	/*
@@ -97,10 +117,36 @@ class PVE2_API {
 		$login_ticket_data = json_decode($login_ticket, true);
 		if ($login_ticket_data == null) {
 			# Login failed.
+			# Just to be safe, set this to null again.
+			$this->pve_login_ticket_timestamp = null;
 			return false;
 		} else {
 			# Login success.
 			$this->pve_login_ticket = $login_ticket_data['data'];
+			# We store a UNIX timestamp of when the ticket was generated here, so we can identify when we need
+			# a new one expiration wise later on...
+			$this->pve_login_ticket_timestamp = time();
+			return true;
+		}
+	}
+
+	/*
+	 * bool pve_check_login_ticket ()
+	 * Checks if the login ticket is valid still, returns false if not.
+	 * Method of checking is purely by age of ticket right now...
+	 */
+	protected function pve_check_login_ticket () {
+		if ($this->pve_login_ticket == null) {
+			# Just to be safe, set this to null again.
+			$this->pve_login_ticket_timestamp = null;
+			return false;
+		}
+		if ($this->pve_login_ticket_timestamp >= (time() + 7200)) {
+			# Reset login ticket object values.
+			$this->pve_login_ticket = null;
+			$this->pve_login_ticket_timestamp = null;
+			return false;
+		} else {
 			return true;
 		}
 	}
@@ -120,19 +166,22 @@ class PVE2_API {
 			$action_path = "/".$action_path;
 		}
 
-		if ($this->pve_login_ticket == null) {
-			# TODO - better error handling?
-			print("Error - Not logged into Proxmox Host. No Login Access Ticket found.\n");
+		if (!$this->pve_check_login_ticket()) {
+			if ($this->print_debug === true) {
+				print("Error - Not logged into Proxmox Host. No Login Access Ticket found or Ticket Expired.\n");
+			}
 			return false;
 		}
 
-		# TODO - handle checking if a login ticket has expired.
-		# should be rare in most web scripts (they have a 2hr lifetime by default), but CLI scripts/daemons may need it...
-
 		# Prepare cURL resource.
 		$prox_ch = curl_init();
+		if ($this->print_debug === true) {
+			print("\nURL - https://".$this->pve_hostname.":8006/api2/json".$action_path."\n");
+		}
 		curl_setopt($prox_ch, CURLOPT_URL, "https://".$this->pve_hostname.":8006/api2/json".$action_path);
 
+		$put_post_http_headers = array();
+		$put_post_http_headers[] = "CSRFPreventionToken: ".$this->pve_login_ticket['CSRFPreventionToken'];
 		# Lets decide what type of action we are taking...
 		switch ($http_method) {
 			case "GET":
@@ -142,42 +191,40 @@ class PVE2_API {
 				curl_setopt($prox_ch, CURLOPT_CUSTOMREQUEST, "PUT");
 
 				# Set "POST" data.
-				$action_postfields = array();
 				$action_postfields_string = $this->convert_postfields_array_to_string($put_post_parameters);
-				unset($action_postfields);
 				curl_setopt($prox_ch, CURLOPT_POSTFIELDS, $action_postfields_string);
 				unset($action_postfields_string);
 
-				# Add CSRFPreventionToken as HTTP header.
-				curl_setopt($prox_ch, CURLOPT_HTTPHEADER, array("CSRFPreventionToken" => $this->pve_login_ticket['CSRFPreventionToken']));
+				# Add required HTTP headers.
+				curl_setopt($prox_ch, CURLOPT_HTTPHEADER, $put_post_http_headers);
 				break;
 			case "POST":
-				curl_setopt($prox_ch, CURLOPT_POST, false);
+				curl_setopt($prox_ch, CURLOPT_POST, true);
 
 				# Set POST data.
-				$action_postfields = array();
 				$action_postfields_string = $this->convert_postfields_array_to_string($put_post_parameters);
-				unset($action_postfields);
 				curl_setopt($prox_ch, CURLOPT_POSTFIELDS, $action_postfields_string);
 				unset($action_postfields_string);
 
-				# Add CSRFPreventionToken as HTTP header.
-				curl_setopt($prox_ch, CURLOPT_HTTPHEADER, array("CSRFPreventionToken" => $this->pve_login_ticket['CSRFPreventionToken']));
+				# Add required HTTP headers.
+				curl_setopt($prox_ch, CURLOPT_HTTPHEADER, $put_post_http_headers);
 				break;
 			case "DELETE":
 				curl_setopt($prox_ch, CURLOPT_CUSTOMREQUEST, "DELETE");
 
 				# No "POST" data required, the delete destination is specified in the URL.
 
-				# Add CSRFPreventionToken as HTTP header.
-				curl_setopt($prox_ch, CURLOPT_HTTPHEADER, array("CSRFPreventionToken" => $this->pve_login_ticket['CSRFPreventionToken']));
+				# Add required HTTP headers.
+		#		curl_setopt($prox_ch, CURLOPT_HTTPHEADER, $put_post_http_headers);
 				break;
 			default:
-				# TODO - better error handling?
-				print("Error - Invalid HTTP Method specified.\n");	
+				if ($this->print_debug === true) {
+					print("Error - Invalid HTTP Method specified.\n");	
+				}
 				return false;
 		}
 
+		curl_setopt($prox_ch, CURLOPT_HEADER, true);
 		curl_setopt($prox_ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($prox_ch, CURLOPT_COOKIE, "PVEAuthCookie=".$this->pve_login_ticket['ticket']);
 		curl_setopt($prox_ch, CURLOPT_SSL_VERIFYPEER, false);
@@ -187,10 +234,69 @@ class PVE2_API {
 		curl_close($prox_ch);
 		unset($prox_ch);
 
-		$action_response_array = json_decode($action_response, true);
-		# TODO - generally if the $action_response->data value is empty, we have a permission problem... handle.
-		# TODO - sanitise return data? potentially make stdClass data into an array/string to return or something?
-		return $action_response_array['data'];
+		$split_action_response = split("\r\n\r\n", $action_response, 2);
+		$header_response = $split_action_response[0];
+		$body_response = $split_action_response[1];
+
+		if ($this->print_debug === true) {
+			print("----------------------------------------------\n");
+
+			print("\nFULL RESPONSE:\n\n");
+			print($action_response);
+			print("\n\nEND FULL RESPONSE.\n");
+
+			print("\nHeaders:\n\n");
+			print($header_response);
+			print("\n\nEnd Headers.\n");
+
+			print("\nData:\n\n");
+			print($body_response);
+			print("\n\nEnd Headers.\n");
+		}
+
+		$action_response_array = json_decode($body_response, true);
+		if ($this->print_debug === true) {
+			print("\nRESPONSE ARRAY:\n\n");
+			print_r($action_response_array);
+			print("\nEND RESPONSE ARRAY.\n");
+			print("----------------------------------------------\n");
+		}
+
+		unset($action_response);
+
+		# Parse response, confirm HTTP response code etc.
+		$split_headers = explode("\r\n", $header_response);
+		if (substr($split_headers[0], 0, 9) == "HTTP/1.1 ") {
+			$split_http_response_line = explode(" ", $split_headers[0]);
+			if ($split_http_response_line[1] == "200") {
+				return $action_response_array['data'];
+			} else {
+				if ($this->print_debug === true) {
+					print("This API Request Failed.\n");
+					print("HTTP Response - ".$split_http_response_line[1]."\n");
+					print("HTTP Error - ".$split_headers[0]."\n");
+				}
+				return false;
+			}
+		} else {
+			if ($this->print_debug === true) {
+				print("Error - Invalid HTTP Response.\n");
+				print_r($split_headers);
+				print("\n");
+			}
+			return false;
+		}
+
+		if (!empty($action_response_array['data'])) {
+			return $action_response_array['data'];
+		} else {
+			if ($this->print_debug === true) {
+				print("Error - \$action_response_array['data'] is empty. Returning false.\n");
+				var_dump($action_response_array['data']);
+				print("\n");
+			}
+			return false;
+		}
 	}
 
 	/*
@@ -213,8 +319,9 @@ class PVE2_API {
 			$this->pve_cluster_node_list = $nodes_array;
 			return true;
 		} else {
-			# TODO - better error handling?
-			print("Error - Empty list of nodes returned in this cluster.\n");
+			if ($this->print_debug === true) {
+				print("Error - Empty list of nodes returned in this cluster.\n");
+			}
 			return false;
 		}
 	}
@@ -282,7 +389,6 @@ class PVE2_API {
 		}
 
 		return $this->pve_action($action_path, "POST", $parameters);
-		# TODO
 	}
 
 	/*

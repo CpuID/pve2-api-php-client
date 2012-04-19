@@ -9,6 +9,10 @@ API spec available at http://pve.proxmox.com/pve2-api-doc/
 
 PHP 5 with cURL (including SSL) support.
 
+## Caveats: ##
+
+This is a work in progress, currently GET's work fine but other methods have some issues that are still being debugged...
+
 ## Usage: ##
 
     # Example - Return status array for each Proxmox Host in this cluster.
