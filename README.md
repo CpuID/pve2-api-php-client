@@ -24,6 +24,10 @@ This is a work in progress, currently GET's and POST's are tested, just need to 
 
     if ($pve2->constructor_success()) {
         if ($pve2->login()) {
+
+            /* Optional - enable debugging. It print()'s any results currently */
+            // $pve2->set_debug(true);
+
             foreach ($pve2->get_node_list() as $node_name) {
                 print_r($pve2->get("/nodes/".$node_name."/status"));
             }
