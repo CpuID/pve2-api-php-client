@@ -11,7 +11,7 @@ PHP 5 with cURL (including SSL) support.
 
 ## Caveats: ##
 
-This is a work in progress, currently GET's work fine but other methods have some issues that are still being debugged...
+This is a work in progress, currently GET's and POST's are tested, just need to test the others...
 
 ## Usage: ##
 
