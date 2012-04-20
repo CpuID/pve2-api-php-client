@@ -9,10 +9,6 @@ API spec available at http://pve.proxmox.com/pve2-api-doc/
 
 PHP 5 with cURL (including SSL) support.
 
-## Caveats: ##
-
-This is a work in progress, currently GET's and POST's are tested, just need to test the others...
-
 ## Usage: ##
 
 Example - Return status array for each Proxmox Host in this cluster.
@@ -83,6 +79,63 @@ Example - Create a new OpenVZ Container on the first host in the cluster.
         exit;
     }
 
+Example - Modify DNS settings on an existing container on the first host.
+
+    require("./pve2-api-php-client/pve2_api.class.php");
+
+    $pve2 = new PVE2_API("hostname", "username", "realm", "password");
+    # realm above can be pve, pam or any other realm available.
+
+    if ($pve2->constructor_success()) {
+
+        /* Optional - enable debugging. It print()'s any results currently */
+        // $pve2->set_debug(true);
+
+        if ($pve2->login()) {
+
+            # Get first node name.
+            $nodes = $pve2->get_node_list();
+            $first_node = $nodes[0];
+            unset($nodes);
+
+            # Update container settings.
+            $container_settings = array();
+            $container_settings['nameserver'] = "4.2.2.2";
+
+            # NOTE - replace XXXX with container ID.
+            var_dump($pve2->put("/nodes/".$first_node."/openvz/XXXX/config", $container_settings));
+        } else {
+            print("Login to Proxmox Host failed.\n");
+            exit;
+        }
+    } else {
+        print("Could not create PVE2_API object.\n");
+        exit;
+    }
+
+Example - Delete an existing container.
+
+    require("./pve2-api-php-client/pve2_api.class.php");
+
+    $pve2 = new PVE2_API("hostname", "username", "realm", "password");
+    # realm above can be pve, pam or any other realm available.
+
+    if ($pve2->constructor_success()) {
+
+        /* Optional - enable debugging. It print()'s any results currently */
+        // $pve2->set_debug(true);
+
+        if ($pve2->login()) {
+            # NOTE - replace XXXX with node short name, and YYYY with container ID.
+            var_dump($pve2->delete("/nodes/XXXX/openvz/YYYY"));
+        } else {
+            print("Login to Proxmox Host failed.\n");
+            exit;
+        }
+    } else {
+        print("Could not create PVE2_API object.\n");
+        exit;
+    }
 
 Licensed under the MIT License.
 See LICENSE file.
