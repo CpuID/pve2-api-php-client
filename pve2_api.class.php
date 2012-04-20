@@ -215,7 +215,7 @@ class PVE2_API {
 				# No "POST" data required, the delete destination is specified in the URL.
 
 				# Add required HTTP headers.
-		#		curl_setopt($prox_ch, CURLOPT_HTTPHEADER, $put_post_http_headers);
+				curl_setopt($prox_ch, CURLOPT_HTTPHEADER, $put_post_http_headers);
 				break;
 			default:
 				if ($this->print_debug === true) {
@@ -269,7 +269,11 @@ class PVE2_API {
 		if (substr($split_headers[0], 0, 9) == "HTTP/1.1 ") {
 			$split_http_response_line = explode(" ", $split_headers[0]);
 			if ($split_http_response_line[1] == "200") {
-				return $action_response_array['data'];
+				if ($http_method == "PUT") {
+					return true;
+				} else {
+					return $action_response_array['data'];
+				}
 			} else {
 				if ($this->print_debug === true) {
 					print("This API Request Failed.\n");
