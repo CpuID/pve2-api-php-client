@@ -54,7 +54,7 @@ Example - Create a new OpenVZ Container on the first host in the cluster.
         if ($pve2->login()) {
 
             # Get first node name.
-            $nodes = $pve2_api->get_node_list();
+            $nodes = $pve2->get_node_list();
             $first_node = $nodes[0];
             unset($nodes);
 
@@ -72,7 +72,7 @@ Example - Create a new OpenVZ Container on the first host in the cluster.
             // print_r($new_container_settings);
             print("---------------------------\n");
 
-            print_r($pve2_api->post("/nodes/".$first_node."/openvz", $new_container_settings));
+            print_r($pve2->post("/nodes/".$first_node."/openvz", $new_container_settings));
             print("\n\n");
         } else {
             print("Login to Proxmox Host failed.\n");
