@@ -34,7 +34,7 @@ class PVE2_API {
 			return false;
 		}
 		# Check hostname resolves.
-		if (gethostbyname($pve_hostname) == $pve_hostname) {
+		if (gethostbyname($pve_hostname) == $pve_hostname && !filter_var($pve_hostname, FILTER_VALIDATE_IP)) {
 			# TODO - better error handling?
 			print("Cannot resolve ".$pve_hostname.", exiting.\n");
 			$this->constructor_success = false;
@@ -234,7 +234,7 @@ class PVE2_API {
 		curl_close($prox_ch);
 		unset($prox_ch);
 
-		$split_action_response = split("\r\n\r\n", $action_response, 2);
+		$split_action_response = explode("\r\n\r\n", $action_response, 2);
 		$header_response = $split_action_response[0];
 		$body_response = $split_action_response[1];
 
