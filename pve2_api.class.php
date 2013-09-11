@@ -341,6 +341,48 @@ class PVE2_API {
 		return $this->pve_cluster_node_list;
 	}
 
+	
+	/*
+	Get Last VMID from a Cluster or a Node
+	
+	return an VMID
+	*/
+
+	public function get_next_vmid() {
+        if (!$this->constructor_success) {
+                        return false;
+                }
+        $vmid = $this->pve_action("/cluster/nextid","GET");
+        if  ($vmid == null)
+        {
+                return false;
+        }else {
+         return $vmid;
+        }
+
+	/*
+	Return the version and minor revision of Proxmox Server
+	*/
+
+
+	 public function get_version() {
+        if (!$this->constructor_success) {
+                        return false;
+                }
+        $version = $this->pve_action("/version","GET");
+        if  ($version == null)
+        {
+                return false;
+        }else {
+         return $version['version'];
+        }
+
+
+        }
+
+
+	
+
 	/*
 	 * object/array? get (string action_path)
 	 */
