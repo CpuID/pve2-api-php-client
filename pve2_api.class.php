@@ -304,7 +304,7 @@ class PVE2_API {
 	}
 
 	/*
-	 * array get_node_list ()
+	 * array reload_node_list ()
 	 * Returns the list of node names as provided by /api2/json/nodes.
 	 * We need this for future get/post/put/delete calls.
 	 * ie. $this->get("nodes/XXX/status"); where XXX is one of the values from this return array.
@@ -330,6 +330,10 @@ class PVE2_API {
 		}
 	}
 
+	/*
+	 * array get_node_list ()
+	 *
+	 */
 	public function get_node_list () {
 		# We run this if we haven't queried for cluster nodes as yet, and cache it in the object.
 		if ($this->pve_cluster_node_list == null) {
@@ -343,45 +347,37 @@ class PVE2_API {
 
 	
 	/*
-	Get Last VMID from a Cluster or a Node
-	
-	return an VMID
-	*/
-
-	public function get_next_vmid() {
-        if (!$this->constructor_success) {
-                        return false;
-                }
-        $vmid = $this->pve_action("/cluster/nextid","GET");
-        if  ($vmid == null)
-        {
-                return false;
-        }else {
-         return $vmid;
-        }
+	 * bool|int get_next_vmid ()
+	 * Get Last VMID from a Cluster or a Node
+	 * returns a VMID, or false if not found.
+	 */
+	public function get_next_vmid () {
+		if (!$this->constructor_success) {
+			return false;
+		}
+		$vmid = $this->pve_action("/cluster/nextid","GET");
+		if ($vmid == null) {
+			return false;
+		} else {
+			return $vmid;
+		}
+	}
 
 	/*
-	Return the version and minor revision of Proxmox Server
-	*/
-
-
-	 public function get_version() {
-        if (!$this->constructor_success) {
-                        return false;
-                }
-        $version = $this->pve_action("/version","GET");
-        if  ($version == null)
-        {
-                return false;
-        }else {
-         return $version['version'];
-        }
-
-
-        }
-
-
-	
+	 * bool|string get_version ()
+	 * Return the version and minor revision of Proxmox Server
+	 */
+	public function get_version () {
+		if (!$this->constructor_success) {
+			return false;
+		}
+		$version = $this->pve_action("/version","GET");
+		if ($version == null) {
+			return false;
+		} else {
+			return $version['version'];
+		}
+	}
 
 	/*
 	 * object/array? get (string action_path)
