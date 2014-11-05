@@ -106,7 +106,7 @@ class PVE2_API {
 		curl_setopt($prox_ch, CURLOPT_POST, true);
 		curl_setopt($prox_ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($prox_ch, CURLOPT_POSTFIELDS, $login_postfields_string);
-		curl_setopt($prox_ch, CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt($prox_ch, CURLOPT_SSL_VERIFYPEER, false); // true = verify SSL certificate
 
 		$login_ticket = curl_exec($prox_ch);
 
@@ -114,8 +114,15 @@ class PVE2_API {
 		unset($prox_ch);
 		unset($login_postfields_string);
 
+        if ( !$login_ticket )
+        {
+            // Wrong SSL / connection timed out
+            $this->pve_login_ticket_timestamp = null;
+			return false;
+        }
+
 		$login_ticket_data = json_decode($login_ticket, true);
-		if ($login_ticket_data == null) {
+		if ($login_ticket_data == null || $login_ticket_data['data'] == null) {
 			# Login failed.
 			# Just to be safe, set this to null again.
 			$this->pve_login_ticket_timestamp = null;
