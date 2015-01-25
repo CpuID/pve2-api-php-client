@@ -16,6 +16,7 @@ class PVE2_API {
 	private $constructor_success;
 
 	protected $pve_hostname;
+	protected $pve_port;
 	protected $pve_username;
 	protected $pve_realm;
 	protected $pve_password;
@@ -26,8 +27,8 @@ class PVE2_API {
 	protected $pve_login_ticket_timestamp;
 	protected $pve_cluster_node_list;
 
-	public function __construct ($pve_hostname, $pve_username, $pve_realm, $pve_password) {
-		if (empty($pve_hostname) || empty($pve_username) || empty($pve_realm) || empty($pve_password)) {
+	public function __construct ($pve_hostname, $pve_port, $pve_username, $pve_realm, $pve_password) {
+		if (empty($pve_hostname) || empty($pve_port) || empty($pve_username) || empty($pve_realm) || empty($pve_password)) {
 			# TODO - better error handling?
 			print("Error - Hostname/Username/Realm/Password required for PVE_API object constructor.\n");
 			$this->constructor_success = false;
@@ -42,6 +43,7 @@ class PVE2_API {
 		}
 
 		$this->pve_hostname = $pve_hostname;
+		$this->pve_port = $pve_port;
 		$this->pve_username = $pve_username;
 		$this->pve_realm = $pve_realm;
 		$this->pve_password = $pve_password;
@@ -102,7 +104,7 @@ class PVE2_API {
 
 		# Perform login request.
 		$prox_ch = curl_init();
-		curl_setopt($prox_ch, CURLOPT_URL, "https://".$this->pve_hostname.":8006/api2/json/access/ticket");
+		curl_setopt($prox_ch, CURLOPT_URL, "https://".$this->pve_hostname.":". $this->pve_port ."/api2/json/access/ticket");
 		curl_setopt($prox_ch, CURLOPT_POST, true);
 		curl_setopt($prox_ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($prox_ch, CURLOPT_POSTFIELDS, $login_postfields_string);
@@ -176,9 +178,9 @@ class PVE2_API {
 		# Prepare cURL resource.
 		$prox_ch = curl_init();
 		if ($this->print_debug === true) {
-			print("\nURL - https://".$this->pve_hostname.":8006/api2/json".$action_path."\n");
+			print("\nURL - https://".$this->pve_hostname.":". $this->pve_port ."/api2/json".$action_path."\n");
 		}
-		curl_setopt($prox_ch, CURLOPT_URL, "https://".$this->pve_hostname.":8006/api2/json".$action_path);
+		curl_setopt($prox_ch, CURLOPT_URL, "https://".$this->pve_hostname.":". $this->pve_port ."/api2/json".$action_path);
 
 		$put_post_http_headers = array();
 		$put_post_http_headers[] = "CSRFPreventionToken: ".$this->pve_login_ticket['CSRFPreventionToken'];
