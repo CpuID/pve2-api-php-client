@@ -33,12 +33,13 @@ class PVE2_API {
 	protected $realm;
 	protected $password;
 	protected $port;
+	protected $verify_ssl;
 
 	protected $login_ticket = null;
 	protected $login_ticket_timestamp = null;
 	protected $cluster_node_list = null;
 
-	public function __construct ($hostname, $username, $realm, $password, $port = 8006) {
+	public function __construct ($hostname, $username, $realm, $password, $port = 8006, $verify_ssl = false) {
 		if (empty($hostname) || empty($username) || empty($realm) || empty($password) || empty($port)) {
 			throw new PVE2_Exception("Hostname/Username/Realm/Password/Port required for PVE2_API object constructor.", 1);
 		}
@@ -50,12 +51,17 @@ class PVE2_API {
 		if (!is_int($port) || $port < 1 || $port > 65535) {
 			throw new PVE2_Exception("Port must be an integer between 1 and 65535.", 6);
 		}
+		// Check that verify_ssl is boolean.
+		if (!is_bool($verify_ssl)) {
+			throw new PVE2_Exception("verify_ssl must be boolean.", 7);
+		}
 
-		$this->hostname = $hostname;
-		$this->username = $username;
-		$this->realm    = $realm;
-		$this->password = $password;
-		$this->port     = $port;
+		$this->hostname   = $hostname;
+		$this->username   = $username;
+		$this->realm      = $realm;
+		$this->password   = $password;
+		$this->port       = $port;
+		$this->verify_ssl = $verify_ssl;
 	}
 
 	/*
@@ -78,7 +84,7 @@ class PVE2_API {
 		curl_setopt($prox_ch, CURLOPT_POST, true);
 		curl_setopt($prox_ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($prox_ch, CURLOPT_POSTFIELDS, $login_postfields_string);
-		curl_setopt($prox_ch, CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt($prox_ch, CURLOPT_SSL_VERIFYPEER, $this->verify_ssl);
 
 		$login_ticket = curl_exec($prox_ch);
 		$login_request_info = curl_getinfo($prox_ch);
@@ -87,13 +93,19 @@ class PVE2_API {
 		unset($prox_ch);
 		unset($login_postfields_string);
 
+		if (!$login_ticket) {
+			// SSL negotiation failed or connection timed out
+			$this->login_ticket_timestamp = null;
+			return false;
+		}
+
 		$login_ticket_data = json_decode($login_ticket, true);
-		if ($login_ticket_data == null) {
+		if ($login_ticket_data == null || $login_ticket_data['data'] == null) {
 			// Login failed.
 			// Just to be safe, set this to null again.
 			$this->login_ticket_timestamp = null;
 			if ($login_request_info['ssl_verify_result'] == 1) {
-				throw new PVE2_Exception("Invalid SSL cert on {$this->hostname} - check that the hostname is correct, and that it appears in the server certificate's SAN list.", 4);
+				throw new PVE2_Exception("Invalid SSL cert on {$this->hostname} - check that the hostname is correct, and that it appears in the server certificate's SAN list. Alternatively set the verify_ssl flag to false if you are using internal self-signed certs (ensure you are aware of the security risks before doing so).", 4);
 			}
 			return false;
 		} else {
