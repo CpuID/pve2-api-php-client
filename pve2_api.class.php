@@ -32,24 +32,30 @@ class PVE2_API {
 	protected $username;
 	protected $realm;
 	protected $password;
+	protected $port;
 
 	protected $login_ticket = null;
 	protected $login_ticket_timestamp = null;
 	protected $cluster_node_list = null;
 
-	public function __construct ($hostname, $username, $realm, $password) {
-		if (empty($hostname) || empty($username) || empty($realm) || empty($password)) {
-			throw new PVE2_Exception("Hostname/Username/Realm/Password required for PVE2_API object constructor.", 1);
+	public function __construct ($hostname, $username, $realm, $password, $port = 8006) {
+		if (empty($hostname) || empty($username) || empty($realm) || empty($password) || empty($port)) {
+			throw new PVE2_Exception("Hostname/Username/Realm/Password/Port required for PVE2_API object constructor.", 1);
 		}
 		// Check hostname resolves.
 		if (gethostbyname($hostname) == $hostname && !filter_var($hostname, FILTER_VALIDATE_IP)) {
 			throw new PVE2_Exception("Cannot resolve {$hostname}.", 2);
 		}
+		// Check port is between 1 and 65535.
+		if (!is_int($port) || $port < 1 || $port > 65535) {
+			throw new PVE2_Exception("Port must be an integer between 1 and 65535.", 6);
+		}
 
 		$this->hostname = $hostname;
 		$this->username = $username;
-		$this->realm = $realm;
+		$this->realm    = $realm;
 		$this->password = $password;
+		$this->port     = $port;
 	}
 
 	/*
@@ -68,7 +74,7 @@ class PVE2_API {
 
 		// Perform login request.
 		$prox_ch = curl_init();
-		curl_setopt($prox_ch, CURLOPT_URL, "https://{$this->hostname}:8006/api2/json/access/ticket");
+		curl_setopt($prox_ch, CURLOPT_URL, "https://{$this->hostname}:{$this->port}/api2/json/access/ticket");
 		curl_setopt($prox_ch, CURLOPT_POST, true);
 		curl_setopt($prox_ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($prox_ch, CURLOPT_POSTFIELDS, $login_postfields_string);
@@ -140,7 +146,7 @@ class PVE2_API {
 
 		// Prepare cURL resource.
 		$prox_ch = curl_init();
-		curl_setopt($prox_ch, CURLOPT_URL, "https://{$this->hostname}:8006/api2/json{$action_path}");
+		curl_setopt($prox_ch, CURLOPT_URL, "https://{$this->hostname}:{$this->port}/api2/json{$action_path}");
 
 		$put_post_http_headers = array();
 		$put_post_http_headers[] = "CSRFPreventionToken: {$this->login_ticket['CSRFPreventionToken']}";
