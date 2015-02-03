@@ -176,7 +176,12 @@ class PVE2_API {
 		// Lets decide what type of action we are taking...
 		switch ($http_method) {
 			case "GET":
-				// Nothing extra to do.
+				// Set "POST" data - cURL will translate this into the appropriate
+				// querystring so we don't have to worry about it.
+				$action_postfields_string = http_build_query($put_post_parameters);
+				curl_setopt($prox_ch, CURLOPT_POSTFIELDS, $action_postfields_string);
+				unset($action_postfields_string);
+
 				break;
 			case "PUT":
 				curl_setopt($prox_ch, CURLOPT_CUSTOMREQUEST, "PUT");
@@ -334,21 +339,21 @@ class PVE2_API {
 	/*
 	 * object/array? get (string action_path)
 	 */
-	public function get ($action_path) {
-		return $this->action($action_path, "GET");
+	public function get ($action_path, $parameters = array()) {
+		return $this->action($action_path, "GET", $parameters);
 	}
 
 	/*
 	 * bool put (string action_path, array parameters)
 	 */
-	public function put ($action_path, $parameters) {
+	public function put ($action_path, $parameters = array()) {
 		return $this->action($action_path, "PUT", $parameters);
 	}
 
 	/*
 	 * bool post (string action_path, array parameters)
 	 */
-	public function post ($action_path, $parameters) {
+	public function post ($action_path, $parameters = array()) {
 		return $this->action($action_path, "POST", $parameters);
 	}
 
