@@ -176,10 +176,11 @@ class PVE2_API {
 		// Lets decide what type of action we are taking...
 		switch ($http_method) {
 			case "GET":
-				// Set "POST" data - cURL will translate this into the appropriate
-				// querystring so we don't have to worry about it.
+				// cURL used to translate POSTFIELDS into the query string when the
+				// request method was GET, but that doesn't seem to be the case any
+				// longer, so we need to build them into the query string ourselves.
 				$action_postfields_string = http_build_query($put_post_parameters);
-				curl_setopt($prox_ch, CURLOPT_POSTFIELDS, $action_postfields_string);
+				$action_path .= (strpos($action_path, '?') === FALSE ? '?' : '&') . $action_postfields_string;
 				unset($action_postfields_string);
 
 				break;
