@@ -99,6 +99,8 @@ class PVE2_API {
 			return false;
 		}
 
+		error_log("Login Ticket: {$login_ticket}");
+
 		$login_ticket_data = json_decode($login_ticket, true);
 		if ($login_ticket_data == null || $login_ticket_data['data'] == null) {
 			// Login failed.
@@ -169,7 +171,6 @@ class PVE2_API {
 
 		// Prepare cURL resource.
 		$prox_ch = curl_init();
-		curl_setopt($prox_ch, CURLOPT_URL, "https://{$this->hostname}:{$this->port}/api2/json{$action_path}");
 
 		$put_post_http_headers = array();
 		$put_post_http_headers[] = "CSRFPreventionToken: {$this->login_ticket['CSRFPreventionToken']}";
@@ -180,17 +181,20 @@ class PVE2_API {
 				// request method was GET, but that doesn't seem to be the case any
 				// longer, so we need to build them into the query string ourselves.
 				$action_postfields_string = http_build_query($put_post_parameters);
-				$action_path .= (strpos($action_path, '?') === FALSE ? '?' : '&') . $action_postfields_string;
+				if ((strpos($action_path, '?') === FALSE) {
+					$action_path .= '?' . $action_postfields_string;
+				} else {
+					$action_path .= '&' . $action_postfields_string;
+				}
 				unset($action_postfields_string);
-
 				break;
 			case "PUT":
-				curl_setopt($prox_ch, CURLOPT_CUSTOMREQUEST, "PUT");
-
 				// Set "POST" data.
 				$action_postfields_string = http_build_query($put_post_parameters);
 				curl_setopt($prox_ch, CURLOPT_POSTFIELDS, $action_postfields_string);
 				unset($action_postfields_string);
+
+				curl_setopt($prox_ch, CURLOPT_CUSTOMREQUEST, "PUT");
 
 				// Add required HTTP headers.
 				curl_setopt($prox_ch, CURLOPT_HTTPHEADER, $put_post_http_headers);
@@ -207,8 +211,8 @@ class PVE2_API {
 				curl_setopt($prox_ch, CURLOPT_HTTPHEADER, $put_post_http_headers);
 				break;
 			case "DELETE":
-				curl_setopt($prox_ch, CURLOPT_CUSTOMREQUEST, "DELETE");
 				// No "POST" data required, the delete destination is specified in the URL.
+				curl_setopt($prox_ch, CURLOPT_CUSTOMREQUEST, "DELETE");
 
 				// Add required HTTP headers.
 				curl_setopt($prox_ch, CURLOPT_HTTPHEADER, $put_post_http_headers);
@@ -218,6 +222,7 @@ class PVE2_API {
 				return false;
 		}
 
+		curl_setopt($prox_ch, CURLOPT_URL, "https://{$this->hostname}:{$this->port}/api2/json{$action_path}");
 		curl_setopt($prox_ch, CURLOPT_HEADER, true);
 		curl_setopt($prox_ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($prox_ch, CURLOPT_COOKIE, "PVEAuthCookie=".$this->login_ticket['ticket']);
