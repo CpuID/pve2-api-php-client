@@ -99,8 +99,6 @@ class PVE2_API {
 			return false;
 		}
 
-		error_log("Login Ticket: {$login_ticket}");
-
 		$login_ticket_data = json_decode($login_ticket, true);
 		if ($login_ticket_data == null || $login_ticket_data['data'] == null) {
 			// Login failed.
