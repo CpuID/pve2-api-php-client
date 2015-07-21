@@ -120,6 +120,14 @@ class PVE2_API {
 		}
 	}
 
+	public function setCookie() {
+		if (!$this->check_login_ticket()) {
+			throw new PVE2_Exception("Not logged into Proxmox host. No Login access ticket found or ticket expired.", 3);
+		}
+
+		setcookie("PVEAuthCookie",$this->login_ticket['ticket']);
+	}
+
 	/*
 	 * bool check_login_ticket ()
 	 * Checks if the login ticket is valid still, returns false if not.
