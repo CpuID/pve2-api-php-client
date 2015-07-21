@@ -121,8 +121,8 @@ class PVE2_API {
 	}
 
 	# Sets the PVEAuthCookie
-	# Attetion, after using this the user is loggen into the WebGui aswell!
-	# Use with care, and DO NOT use with root, it may harm your System
+	# Attetion, after using this the user is logged into the web interface aswell!
+	# Use with care, and DO NOT use with root, it may harm your system
 	public function setCookie() {
 		if (!$this->check_login_ticket()) {
 			throw new PVE2_Exception("Not logged into Proxmox host. No Login access ticket found or ticket expired.", 3);
