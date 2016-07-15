@@ -6,22 +6,22 @@ Proxmox VE APIv2 (PVE2) Client - PHP Class
 
 Copyright (c) 2012-2014 Nathan Sullivan
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of 
-this software and associated documentation files (the "Software"), to deal in 
-the Software without restriction, including without limitation the rights to 
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of 
-the Software, and to permit persons to whom the Software is furnished to do so, 
-subject to the following conditions: 
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all 
-copies or substantial portions of the Software. 
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS 
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR 
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER 
-IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
 
@@ -48,7 +48,7 @@ class PVE2_API {
 			throw new PVE2_Exception("Cannot resolve {$hostname}.", 2);
 		}
 		// Check port is between 1 and 65535.
-		if (!is_int($port) || $port < 1 || $port > 65535) {
+		if (!filter_var($port, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]])) {
 			throw new PVE2_Exception("Port must be an integer between 1 and 65535.", 6);
 		}
 		// Check that verify_ssl is boolean.
@@ -208,7 +208,7 @@ class PVE2_API {
 				curl_setopt($prox_ch, CURLOPT_HTTPHEADER, $put_post_http_headers);
 				break;
 			default:
-				throw new PVE2_Exception("Error - Invalid HTTP Method specified.", 5);	
+				throw new PVE2_Exception("Error - Invalid HTTP Method specified.", 5);
 				return false;
 		}
 
@@ -249,8 +249,8 @@ class PVE2_API {
 					return $action_response_array['data'];
 				}
 			} else {
-				error_log("This API Request Failed.\n" . 
-					"HTTP Response - {$split_http_response_line[1]}\n" . 
+				error_log("This API Request Failed.\n" .
+					"HTTP Response - {$split_http_response_line[1]}\n" .
 					"HTTP Error - {$split_headers[0]}");
 				return false;
 			}
@@ -262,7 +262,7 @@ class PVE2_API {
 		if (!empty($action_response_array['data'])) {
 			return $action_response_array['data'];
 		} else {
-			error_log("\$action_response_array['data'] is empty. Returning false.\n" . 
+			error_log("\$action_response_array['data'] is empty. Returning false.\n" .
 				var_export($action_response_array['data'], true));
 			return false;
 		}
@@ -303,7 +303,7 @@ class PVE2_API {
 
 		return $this->cluster_node_list;
 	}
-	
+
 	/*
 	 * bool|int get_next_vmid ()
 	 * Get Last VMID from a Cluster or a Node
