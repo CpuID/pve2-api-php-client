@@ -7,13 +7,13 @@ API spec available at https://pve.proxmox.com/pve-docs/api-viewer/index.html
 
 ## Requirements: ##
 
-PHP 5 with cURL (including SSL) support.
+PHP 7 with cURL (including SSL/TLS) support.
 
 ## Usage: ##
 
 Example - Return status array for each Proxmox Host in this cluster.
 
-    require("./pve2-api-php-client/pve2_api.class.php");
+    require_once("./pve2-api-php-client/pve2_api.class.php");
 
     # You can try/catch exception handle the constructor here if you want.
     $pve2 = new PVE2_API("hostname", "username", "realm", "password");
@@ -30,7 +30,7 @@ Example - Return status array for each Proxmox Host in this cluster.
 
 Example - Create a new OpenVZ Container on the first host in the cluster.
 
-    require("./pve2-api-php-client/pve2_api.class.php");
+    require_once("./pve2-api-php-client/pve2_api.class.php");
 
     # You can try/catch exception handle the constructor here if you want.
     $pve2 = new PVE2_API("hostname", "username", "realm", "password");
@@ -57,7 +57,7 @@ Example - Create a new OpenVZ Container on the first host in the cluster.
         // print_r($new_container_settings);
         print("---------------------------\n");
 
-        print_r($pve2->post("/nodes/".$first_node."/openvz", $new_container_settings));
+        print_r($pve2->post("/nodes/".$first_node."/openvz",$new_container_settings));
         print("\n\n");
     } else {
         print("Login to Proxmox Host failed.\n");
@@ -66,7 +66,7 @@ Example - Create a new OpenVZ Container on the first host in the cluster.
 
 Example - Modify DNS settings on an existing container on the first host.
 
-    require("./pve2-api-php-client/pve2_api.class.php");
+    require_once("./pve2-api-php-client/pve2_api.class.php");
 
     # You can try/catch exception handle the constructor here if you want.
     $pve2 = new PVE2_API("hostname", "username", "realm", "password");
@@ -84,7 +84,7 @@ Example - Modify DNS settings on an existing container on the first host.
         $container_settings['nameserver'] = "4.2.2.2";
 
         # NOTE - replace XXXX with container ID.
-        var_dump($pve2->put("/nodes/".$first_node."/openvz/XXXX/config", $container_settings));
+        var_dump($pve2->put("/nodes/".$first_node."/openvz/XXXX/config",$container_settings));
     } else {
         print("Login to Proxmox Host failed.\n");
         exit;
@@ -92,7 +92,7 @@ Example - Modify DNS settings on an existing container on the first host.
 
 Example - Delete an existing container.
 
-    require("./pve2-api-php-client/pve2_api.class.php");
+    require_once("./pve2-api-php-client/pve2_api.class.php");
 
     # You can try/catch exception handle the constructor here if you want.
     $pve2 = new PVE2_API("hostname", "username", "realm", "password");
