@@ -7,7 +7,7 @@ API spec available at https://pve.proxmox.com/pve-docs/api-viewer/index.html
 
 ## Requirements: ##
 
-PHP 7 with cURL (including SSL/TLS) support.
+PHP 5/7 with cURL (including SSL/TLS) support.
 
 ## Usage: ##
 
@@ -57,7 +57,7 @@ Example - Create a new OpenVZ Container on the first host in the cluster.
         // print_r($new_container_settings);
         print("---------------------------\n");
 
-        print_r($pve2->post("/nodes/".$first_node."/openvz",$new_container_settings));
+        print_r($pve2->post("/nodes/".$first_node."/openvz", $new_container_settings));
         print("\n\n");
     } else {
         print("Login to Proxmox Host failed.\n");
@@ -84,7 +84,7 @@ Example - Modify DNS settings on an existing container on the first host.
         $container_settings['nameserver'] = "4.2.2.2";
 
         # NOTE - replace XXXX with container ID.
-        var_dump($pve2->put("/nodes/".$first_node."/openvz/XXXX/config",$container_settings));
+        var_dump($pve2->put("/nodes/".$first_node."/openvz/XXXX/config", $container_settings));
     } else {
         print("Login to Proxmox Host failed.\n");
         exit;
