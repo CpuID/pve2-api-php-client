@@ -7,13 +7,13 @@ API spec available at https://pve.proxmox.com/pve-docs/api-viewer/index.html
 
 ## Requirements: ##
 
-PHP 5 with cURL (including SSL) support.
+PHP 5/7 with cURL (including SSL/TLS) support.
 
 ## Usage: ##
 
 Example - Return status array for each Proxmox Host in this cluster.
 
-    require("./pve2-api-php-client/pve2_api.class.php");
+    require_once("./pve2-api-php-client/pve2_api.class.php");
 
     # You can try/catch exception handle the constructor here if you want.
     $pve2 = new PVE2_API("hostname", "username", "realm", "password");
@@ -30,7 +30,7 @@ Example - Return status array for each Proxmox Host in this cluster.
 
 Example - Create a new OpenVZ Container on the first host in the cluster.
 
-    require("./pve2-api-php-client/pve2_api.class.php");
+    require_once("./pve2-api-php-client/pve2_api.class.php");
 
     # You can try/catch exception handle the constructor here if you want.
     $pve2 = new PVE2_API("hostname", "username", "realm", "password");
@@ -66,7 +66,7 @@ Example - Create a new OpenVZ Container on the first host in the cluster.
 
 Example - Modify DNS settings on an existing container on the first host.
 
-    require("./pve2-api-php-client/pve2_api.class.php");
+    require_once("./pve2-api-php-client/pve2_api.class.php");
 
     # You can try/catch exception handle the constructor here if you want.
     $pve2 = new PVE2_API("hostname", "username", "realm", "password");
@@ -92,7 +92,7 @@ Example - Modify DNS settings on an existing container on the first host.
 
 Example - Delete an existing container.
 
-    require("./pve2-api-php-client/pve2_api.class.php");
+    require_once("./pve2-api-php-client/pve2_api.class.php");
 
     # You can try/catch exception handle the constructor here if you want.
     $pve2 = new PVE2_API("hostname", "username", "realm", "password");
