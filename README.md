@@ -7,7 +7,7 @@ API spec available at https://pve.proxmox.com/pve-docs/api-viewer/index.html
 
 ## Requirements: ##
 
-PHP 5/7 with cURL (including SSL/TLS) support.
+PHP 5/7/8 with cURL (including SSL/TLS) support.
 
 ## Usage: ##
 
@@ -28,7 +28,7 @@ Example - Return status array for each Proxmox Host in this cluster.
         exit;
     }
 
-Example - Create a new OpenVZ Container on the first host in the cluster.
+Example - Create a new Linux Container (LXC) on the first host in the cluster.
 
     require_once("./pve2-api-php-client/pve2_api.class.php");
 
@@ -43,7 +43,7 @@ Example - Create a new OpenVZ Container on the first host in the cluster.
         $first_node = $nodes[0];
         unset($nodes);
 
-        # Create a VZ container on the first node in the cluster.
+        # Create a Linux Container (LXC) on the first node in the cluster.
         $new_container_settings = array();
         $new_container_settings['ostemplate'] = "local:vztmpl/debian-6.0-standard_6.0-4_amd64.tar.gz";
         $new_container_settings['vmid'] = "1234";
@@ -57,7 +57,7 @@ Example - Create a new OpenVZ Container on the first host in the cluster.
         // print_r($new_container_settings);
         print("---------------------------\n");
 
-        print_r($pve2->post("/nodes/".$first_node."/openvz", $new_container_settings));
+        print_r($pve2->post("/nodes/".$first_node."/lxc", $new_container_settings));
         print("\n\n");
     } else {
         print("Login to Proxmox Host failed.\n");
@@ -84,7 +84,7 @@ Example - Modify DNS settings on an existing container on the first host.
         $container_settings['nameserver'] = "4.2.2.2";
 
         # NOTE - replace XXXX with container ID.
-        var_dump($pve2->put("/nodes/".$first_node."/openvz/XXXX/config", $container_settings));
+        var_dump($pve2->put("/nodes/".$first_node."/lxc/XXXX/config", $container_settings));
     } else {
         print("Login to Proxmox Host failed.\n");
         exit;
@@ -100,7 +100,7 @@ Example - Delete an existing container.
 
     if ($pve2->login()) {
         # NOTE - replace XXXX with node short name, and YYYY with container ID.
-        var_dump($pve2->delete("/nodes/XXXX/openvz/YYYY"));
+        var_dump($pve2->delete("/nodes/XXXX/lxc/YYYY"));
     } else {
         print("Login to Proxmox Host failed.\n");
         exit;
