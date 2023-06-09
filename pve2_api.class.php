@@ -3,8 +3,9 @@
 /*
 
 Proxmox VE APIv2 (PVE2) Client - PHP Class
+https://github.com/CpuID/pve2-api-php-client/
 
-Copyright (c) 2012-2014 Nathan Sullivan
+Copyright (c) Nathan Sullivan
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
