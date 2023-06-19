@@ -133,6 +133,16 @@ class PVE2_API {
 		setrawcookie("PVEAuthCookie", $this->login_ticket['ticket'], 0, "/");
 	}
 
+	# Gets the PVE Access Ticket
+	# ie. for VNC tunnel access
+	public function getTicket() {
+		if ($this->login_ticket['ticket']) {
+			return $this->login_ticket;
+		} else {
+			return false;
+		}
+	}
+
 	/*
 	 * bool check_login_ticket ()
 	 * Checks if the login ticket is valid still, returns false if not.
@@ -231,12 +241,12 @@ class PVE2_API {
 		$action_response_array = json_decode($body_response, true);
 
 		$action_response_export = var_export($action_response_array, true);
-		error_log("----------------------------------------------\n" .
-			"FULL RESPONSE:\n\n{$action_response}\n\nEND FULL RESPONSE\n\n" .
-			"Headers:\n\n{$header_response}\n\nEnd Headers\n\n" .
-			"Data:\n\n{$body_response}\n\nEnd Data\n\n" .
-			"RESPONSE ARRAY:\n\n{$action_response_export}\n\nEND RESPONSE ARRAY\n" .
-			"----------------------------------------------");
+		// error_log("----------------------------------------------\n" .
+		//	"FULL RESPONSE:\n\n{$action_response}\n\nEND FULL RESPONSE\n\n" .
+		//	"Headers:\n\n{$header_response}\n\nEnd Headers\n\n" .
+		//	"Data:\n\n{$body_response}\n\nEnd Data\n\n" .
+		//	"RESPONSE ARRAY:\n\n{$action_response_export}\n\nEND RESPONSE ARRAY\n" .
+		//	"----------------------------------------------");
 
 		unset($action_response);
 		unset($action_response_export);
@@ -252,20 +262,21 @@ class PVE2_API {
 					return $action_response_array['data'];
 				}
 			} else {
-				error_log("PVE2 API: This API Request Failed.\n" .
-					"HTTP Response - {$split_http_response_line[1]}\n" .
-					"HTTP Error - {$split_headers[0]}");
+				throw new PVE2_Exception("PVE2 API: This API Request Failed.\n" .
+					"HTTP CODE: {$split_http_response_line[1]},\n" .
+					"HTTP ERROR: {$split_headers[0]},\n" . 
+					"REPLY INFO: {$body_response}");
 				return false;
 			}
 		} else {
-			error_log("PVE2 API: Error - Invalid HTTP Response.\n" . var_export($split_headers, true));
+			throw new PVE2_Exception("PVE2 API: Error - Invalid HTTP Response.\n" . var_export($split_headers, true));
 			return false;
 		}
 
 		if (!empty($action_response_array['data'])) {
 			return $action_response_array['data'];
 		} else {
-			error_log("PVE2 API: \$action_response_array['data'] is empty. Returning false.\n" .
+			throw new PVE2_Exception("PVE2 API: \$action_response_array['data'] is empty. Returning false.\n" .
 				var_export($action_response_array['data'], true));
 			return false;
 		}
