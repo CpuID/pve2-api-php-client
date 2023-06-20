@@ -265,10 +265,13 @@ class PVE2_API {
 					return $action_response_array['data'];
 				}
 			} else {
-				throw new PVE2_Exception("PVE2 API: This API Request Failed.\n" .
+				if($verbose_mode === TRUE){
+					error_log("PVE2 API: This API Request Failed.\n" .
 					"HTTP CODE: {$split_http_response_line[1]},\n" .
 					"HTTP ERROR: {$split_headers[0]},\n" . 
 					"REPLY INFO: {$body_response}");
+				}
+				return false;
 			}
 		} else {
 			throw new PVE2_Exception("PVE2 API: Error - Invalid HTTP Response.\n" . var_export($split_headers, true));
