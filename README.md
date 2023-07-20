@@ -16,6 +16,8 @@ Example - Return status array for each Proxmox Host in this cluster.
     require_once("./pve2-api-php-client/pve2_api.class.php");
 
     # You can try/catch exception handle the constructor here if you want.
+    
+    ## EXAMPLE: Login with username and password ##
     $pve2 = new PVE2_API("hostname", "username", "realm", "password");
     # realm above can be pve, pam or any other realm available.
 
@@ -27,6 +29,22 @@ Example - Return status array for each Proxmox Host in this cluster.
         print("Login to Proxmox Host failed.\n");
         exit;
     }
+
+
+    ## EXAMPLE: Login with API Token ##
+    $pve2 = new PVE2_API("hostname", "username", "realm", "TOKENID:TOKENVALUE");
+    # realm above can be pve, pam or any other realm available.
+
+    if ($pve2->login()) {
+        foreach ($pve2->get_node_list() as $node_name) {
+            print_r($pve2->get("/nodes/".$node_name."/status"));
+        }
+    } else {
+        print("Login to Proxmox Host failed.\n");
+        exit;
+    }
+
+
 
 Example - Create a new Linux Container (LXC) on the first host in the cluster.
 
