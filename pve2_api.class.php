@@ -3,8 +3,9 @@
 /*
 
 Proxmox VE APIv2 (PVE2) Client - PHP Class
+https://github.com/CpuID/pve2-api-php-client/
 
-Copyright (c) 2012-2014 Nathan Sullivan
+Copyright (c) Nathan Sullivan
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -39,21 +40,24 @@ class PVE2_API {
 	protected $login_ticket_timestamp = null;
 	protected $cluster_node_list = null;
 
+	// Set verbosity on/off, default to off
+	public $verbose_mode = FALSE;
+
 	public function __construct ($hostname, $username, $realm, $password, $port = 8006, $verify_ssl = false) {
 		if (empty($hostname) || empty($username) || empty($realm) || empty($password) || empty($port)) {
-			throw new PVE2_Exception("Hostname/Username/Realm/Password/Port required for PVE2_API object constructor.", 1);
+			throw new PVE2_Exception("PVE2 API: Hostname/Username/Realm/Password/Port required for PVE2_API object constructor.", 1);
 		}
 		// Check hostname resolves.
 		if (gethostbyname($hostname) == $hostname && !filter_var($hostname, FILTER_VALIDATE_IP)) {
-			throw new PVE2_Exception("Cannot resolve {$hostname}.", 2);
+			throw new PVE2_Exception("PVE2 API: Cannot resolve {$hostname}.", 2);
 		}
 		// Check port is between 1 and 65535.
 		if (!filter_var($port, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]])) {
-			throw new PVE2_Exception("Port must be an integer between 1 and 65535.", 6);
+			throw new PVE2_Exception("PVE2 API: Port must be an integer between 1 and 65535.", 6);
 		}
 		// Check that verify_ssl is boolean.
 		if (!is_bool($verify_ssl)) {
-			throw new PVE2_Exception("verify_ssl must be boolean.", 7);
+			throw new PVE2_Exception("PVE2 API: verify_ssl must be boolean.", 7);
 		}
 
 		$this->hostname   = $hostname;
@@ -106,7 +110,7 @@ class PVE2_API {
 			// Just to be safe, set this to null again.
 			$this->login_ticket_timestamp = null;
 			if ($login_request_info['ssl_verify_result'] == 1) {
-				throw new PVE2_Exception("Invalid SSL cert on {$this->hostname} - check that the hostname is correct, and that it appears in the server certificate's SAN list. Alternatively set the verify_ssl flag to false if you are using internal self-signed certs (ensure you are aware of the security risks before doing so).", 4);
+				throw new PVE2_Exception("PVE2 API: Invalid SSL cert on {$this->hostname} - check that the hostname is correct, and that it appears in the server certificate's SAN list. Alternatively set the verify_ssl flag to false if you are using internal self-signed certs (ensure you are aware of the security risks before doing so).", 4);
 			}
 			return false;
 		} else {
@@ -126,10 +130,20 @@ class PVE2_API {
 	# Use with care, and DO NOT use with root, it may harm your system
 	public function setCookie() {
 		if (!$this->check_login_ticket()) {
-			throw new PVE2_Exception("Not logged into Proxmox host. No Login access ticket found or ticket expired.", 3);
+			throw new PVE2_Exception("PVE2 API: Not logged into Proxmox. No login Access Ticket found or Ticket expired.", 3);
 		}
 
 		setrawcookie("PVEAuthCookie", $this->login_ticket['ticket'], 0, "/");
+	}
+
+	# Gets the PVE Access Ticket
+	# (used in PVEAuthCookie)
+	public function getTicket() {
+		if ($this->login_ticket['ticket']) {
+			return $this->login_ticket['ticket'];
+		} else {
+			return false;
+		}
 	}
 
 	/*
@@ -165,7 +179,7 @@ class PVE2_API {
 		}
 
 		if (!$this->check_login_ticket()) {
-			throw new PVE2_Exception("Not logged into Proxmox host. No Login access ticket found or ticket expired.", 3);
+			throw new PVE2_Exception("PVE2 API: Not logged into Proxmox. No login Access Ticket found or Ticket expired.", 3);
 		}
 
 		// Prepare cURL resource.
@@ -209,8 +223,7 @@ class PVE2_API {
 				curl_setopt($prox_ch, CURLOPT_HTTPHEADER, $put_post_http_headers);
 				break;
 			default:
-				throw new PVE2_Exception("Error - Invalid HTTP Method specified.", 5);
-				return false;
+				throw new PVE2_Exception("PVE2 API: Error - Invalid HTTP Method specified.", 5);
 		}
 
 		curl_setopt($prox_ch, CURLOPT_HEADER, true);
@@ -230,13 +243,14 @@ class PVE2_API {
 		$action_response_array = json_decode($body_response, true);
 
 		$action_response_export = var_export($action_response_array, true);
-		error_log("----------------------------------------------\n" .
-			"FULL RESPONSE:\n\n{$action_response}\n\nEND FULL RESPONSE\n\n" .
-			"Headers:\n\n{$header_response}\n\nEnd Headers\n\n" .
-			"Data:\n\n{$body_response}\n\nEnd Data\n\n" .
-			"RESPONSE ARRAY:\n\n{$action_response_export}\n\nEND RESPONSE ARRAY\n" .
-			"----------------------------------------------");
-
+		if($verbose_mode === TRUE){
+			error_log("----------------------------------------------\n" .
+				"FULL RESPONSE:\n\n{$action_response}\n\nEND FULL RESPONSE\n\n" .
+				"HEADERS:\n\n{$header_response}\n\nEND HEADERS\n\n" .
+				"DATA:\n\n{$body_response}\n\nEND DATA\n\n" .
+				"RESPONSE ARRAY:\n\n{$action_response_export}\n\nEND RESPONSE ARRAY\n" .
+				"----------------------------------------------");
+		}
 		unset($action_response);
 		unset($action_response_export);
 
@@ -251,22 +265,23 @@ class PVE2_API {
 					return $action_response_array['data'];
 				}
 			} else {
-				error_log("This API Request Failed.\n" .
-					"HTTP Response - {$split_http_response_line[1]}\n" .
-					"HTTP Error - {$split_headers[0]}");
+				if($verbose_mode === TRUE){
+					error_log("PVE2 API: This API Request Failed.\n" .
+					"HTTP CODE: {$split_http_response_line[1]},\n" .
+					"HTTP ERROR: {$split_headers[0]},\n" . 
+					"REPLY INFO: {$body_response}");
+				}
 				return false;
 			}
 		} else {
-			error_log("Error - Invalid HTTP Response.\n" . var_export($split_headers, true));
-			return false;
+			throw new PVE2_Exception("PVE2 API: Error - Invalid HTTP Response.\n" . var_export($split_headers, true));
 		}
 
 		if (!empty($action_response_array['data'])) {
 			return $action_response_array['data'];
 		} else {
-			error_log("\$action_response_array['data'] is empty. Returning false.\n" .
+			throw new PVE2_Exception("PVE2 API: \$action_response_array['data'] is empty. Returning false.\n" .
 				var_export($action_response_array['data'], true));
-			return false;
 		}
 	}
 
@@ -286,7 +301,9 @@ class PVE2_API {
 			$this->cluster_node_list = $nodes_array;
 			return true;
 		} else {
-			error_log(" Empty list of nodes returned in this cluster.");
+			if($verbose_mode === TRUE){
+				error_log("PVE2 API: Empty list of Nodes returned in this Cluster.");
+			}
 			return false;
 		}
 	}
@@ -342,12 +359,16 @@ class PVE2_API {
 					$this->$cluster_vms_list = $result;
 					return $this->$cluster_vms_list;
 				} else {
-					error_log(" Empty list of vms returned in this cluster.");
+					if($verbose_mode === TRUE){
+						error_log("PVE2 API: Empty list of VMs returned in this Cluster.");
+					}
 					return false;
 				}
 			}
 		} else {
-			error_log(" Empty list of nodes returned in this cluster.");
+			if($verbose_mode === TRUE){
+				error_log("PVE2 API: Empty list of Nodes returned in this Cluster.");
+			}
 			return false;
 		}
 	}
@@ -365,14 +386,20 @@ class PVE2_API {
 			$url = "/nodes/" . $node . "/qemu/" . $vmid . "/status/start";
 			$post = $this->post($url,$parameters);
 			if ($post) {
-				error_log("Started vm " . $vmid . "");
+				if($verbose_mode === TRUE){
+					error_log("PVE2 API: Started VM " . $vmid . "");
+				}
 				return true;
 			} else {
-				error_log("Error starting vm " . $vmid . "");
+				if($verbose_mode === TRUE){
+					error_log("PVE2 API: Error starting VM " . $vmid . "");
+				}
 				return false;
 			}
 		} else {
-			error_log("no vm or node valid");
+			if($verbose_mode === TRUE){
+				error_log("PVE2 API: No VM or Node valid");
+			}
 			return false;
 		}
 	}
@@ -391,14 +418,20 @@ class PVE2_API {
 			$url = "/nodes/" . $node . "/qemu/" . $vmid . "/status/shutdown";
 			$post = $this->post($url,$parameters);
 			if ($post) {
-				error_log("Shutdown vm " . $vmid . "");
+				if($verbose_mode === TRUE){
+					error_log("PVE2 API: Shutdown VM " . $vmid . "");
+				}
 				return true;
 			} else {
-				error_log("Error shutting down vm " . $vmid . "");
+				if($verbose_mode === TRUE){
+					error_log("PVE2 API: Error shutting down VM " . $vmid . "");
+				}
 				return false;
 			}
 		} else {
-			error_log("no vm or node valid");
+			if($verbose_mode === TRUE){
+				error_log("PVE2 API: No VM or Node valid");
+			}
 			return false;
 		}
 	}
@@ -417,14 +450,20 @@ class PVE2_API {
 			$url = "/nodes/" . $node . "/qemu/" . $vmid . "/status/stop";
 			$post = $this->post($url,$parameters);
 			if ($post) {
-				error_log("Stopped vm " . $vmid . "");
+				if($verbose_mode === TRUE){
+					error_log("PVE2 API: Stopped VM " . $vmid . "");
+				}
 				return true;
 			} else {
-				error_log("Error stopping vm " . $vmid . "");
+				if($verbose_mode === TRUE){
+					error_log("PVE2 API: Error stopping VM " . $vmid . "");
+				}
 				return false;
 			}
 		} else {
-			error_log("no vm or node valid");
+			if($verbose_mode === TRUE){
+				error_log("PVE2 API: No VM or Node valid");
+			}
 			return false;
 		}
 	}
@@ -442,14 +481,20 @@ class PVE2_API {
 			$url = "/nodes/" . $node . "/qemu/" . $vmid . "/status/resume";
 			$post = $this->post($url,$parameters);
 			if ($post) {
-				error_log("Resumed vm " . $vmid . "");
+				if($verbose_mode === TRUE){
+					error_log("PVE2 API: Resumed VM " . $vmid . "");
+				}
 				return true;
 			} else {
-				error_log("Error resuming vm " . $vmid . "");
+				if($verbose_mode === TRUE){
+					error_log("PVE2 API: Error resuming VM " . $vmid . "");
+				}
 				return false;
 			}
 		} else {
-			error_log("no vm or node valid");
+			if($verbose_mode === TRUE){
+				error_log("PVE2 API: No VM or Node valid");
+			}
 			return false;
 		}
 	}
@@ -467,14 +512,20 @@ class PVE2_API {
 			$url = "/nodes/" . $node . "/qemu/" . $vmid . "/status/suspend";
 			$post = $this->post($url,$parameters);
 			if ($post) {
-				error_log("Suspended vm " . $vmid . "");
+				if($verbose_mode === TRUE){
+					error_log("PVE2 API: Suspended VM " . $vmid . "");
+				}
 				return true;
 			} else {
-				error_log("Error suspending vm " . $vmid . "");
+				if($verbose_mode === TRUE){
+					error_log("PVE2 API: Error suspending VM " . $vmid . "");
+				}
 				return false;
 			}
 		} else {
-			error_log("no vm or node valid");
+			if($verbose_mode === TRUE){
+				error_log("PVE2 API: No VM or Node valid");
+			}
 			return false;
 		}
 	}
@@ -495,14 +546,20 @@ class PVE2_API {
 			$url = "/nodes/" . $node . "/qemu/" . $vmid . "/clone";
 			$post = $this->post($url,$parameters);
 			if ($post) {
-				error_log("Cloned vm " . $vmid . " to " . $lastid . "");
+				if($verbose_mode === TRUE){
+					error_log("PVE2 API: Cloned VM " . $vmid . " to " . $lastid . "");
+				}
 				return true;
 			} else {
-				error_log("Error cloning vm " . $vmid . " to " . $lastid . "");
+				if($verbose_mode === TRUE){
+					error_log("PVE2 API: Error cloning VM " . $vmid . " to " . $lastid . "");
+				}
 				return false;
 			}
 		} else {
-			error_log("no vm or node valid");
+			if($verbose_mode === TRUE){
+				error_log("PVE2 API: No VM or Node valid");
+			}
 			return false;
 		}
 	}
@@ -531,14 +588,20 @@ class PVE2_API {
 			$url = "/nodes/" . $node . "/qemu/" . $vmid . "/snapshot";
 			$post = $this->post($url,$parameters);
 			if ($post) {
-				error_log("Cloned vm " . $vmid . " to " . $lastid . "");
+				if($verbose_mode === TRUE){
+					error_log("PVE2 API: Snapshotted VM " . $vmid . " to " . $lastid . "");
+				}
 				return true;
 			} else {
-				error_log("Error cloning vm " . $vmid . " to " . $lastid . "");
+				if($verbose_mode === TRUE){
+					error_log("PVE2 API: Error snapshotting VM " . $vmid . " to " . $lastid . "");
+				}
 				return false;
 			}
 		} else {
-			error_log("no vm or node valid");
+			if($verbose_mode === TRUE){
+				error_log("PVE2 API: No VM or Node valid");
+			}
 			return false;
 		}
 	}
