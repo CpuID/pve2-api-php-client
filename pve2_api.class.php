@@ -4,8 +4,6 @@
 
 Proxmox VE APIv2 (PVE2) Client - PHP Class
 
-Copyright (c) 2012-2014 Nathan Sullivan
-
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
 the Software without restriction, including without limitation the rights to
@@ -230,12 +228,13 @@ class PVE2_API {
 		$action_response_array = json_decode($body_response, true);
 
 		$action_response_export = var_export($action_response_array, true);
-		error_log("----------------------------------------------\n" .
-			"FULL RESPONSE:\n\n{$action_response}\n\nEND FULL RESPONSE\n\n" .
-			"Headers:\n\n{$header_response}\n\nEnd Headers\n\n" .
-			"Data:\n\n{$body_response}\n\nEnd Data\n\n" .
-			"RESPONSE ARRAY:\n\n{$action_response_export}\n\nEND RESPONSE ARRAY\n" .
-			"----------------------------------------------");
+		// Per GH Issues #45/#47, commenting and may later expose this via option.
+		// error_log("----------------------------------------------\n" .
+			// "FULL RESPONSE:\n\n{$action_response}\n\nEND FULL RESPONSE\n\n" .
+			// "Headers:\n\n{$header_response}\n\nEnd Headers\n\n" .
+			// "Data:\n\n{$body_response}\n\nEnd Data\n\n" .
+			// "RESPONSE ARRAY:\n\n{$action_response_export}\n\nEND RESPONSE ARRAY\n" .
+			// "----------------------------------------------");
 
 		unset($action_response);
 		unset($action_response_export);
